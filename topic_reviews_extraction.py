@@ -179,6 +179,7 @@ print_top_words(nmf, tfidf_feature_names, n_top_words)
 wordcloud_per_topic(nmf, tfidf_feature_names, n_top_words,'NMF')
 
 
+# Fit the LDA model
 print("Fitting LDA models with tf features, "
       "n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
