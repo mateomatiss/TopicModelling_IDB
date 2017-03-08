@@ -84,17 +84,17 @@ def read_data(path, reviews, labels, words):
             labels.append(path==path_pos)            
    
 
-def create_wordcloud(text, max_nr_words):
+def create_wordcloud(text, max_nr_words, wordcloud_name):
     wordcloud = WordCloud(stopwords = STOPSET,
                           max_words=max_nr_words,
                           width=3000,
                           height=2000
                           ).generate(text)
-    wordcloud.to_file(os.path.join(os.path.dirname(__file__), "Wordcloud.png"))
-    plt.imshow(wordcloud)
-    plt.axis("off")
-    plt.ion()
-    plt.show()
+    wordcloud.to_file(os.path.join(os.path.dirname(__file__), wordcloud_name))
+    #plt.imshow(wordcloud)
+    #plt.axis("off")
+    #plt.ion()
+    #plt.show()
 
 
 def print_top_words(model, feature_names, n_top_words):
@@ -119,13 +119,8 @@ def wordcloud_per_topic(model, feature_names, n_top_words, model_name):
     save_path = "./" + model_name
     if not os.path.exists(save_path):
         os.makedirs(save_path)           
-    wordcloud = WordCloud(stopwords = STOPSET,
-                          max_words=n_top_words,
-                          width=3000,
-                          height=2000
-                          ).generate(text)
     wordcloud_name = save_path + "/Wordcloud_topic_" + str(topic_idx) +".png"
-    wordcloud.to_file(os.path.join(os.path.dirname(__file__), wordcloud_name))
+    create_wordcloud(text, n_top_words, wordcloud_name)
 
 
 n_features = 2000
