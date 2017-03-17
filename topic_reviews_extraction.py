@@ -56,20 +56,20 @@ def tokenize(text):
     tokens = nltk.word_tokenize(text)
     tokens = [i for i in tokens if i not in STOPSET_SPANISH and len(i) > 1]
     #tokens = stem_tokens(tokens, PorterStemmer())
-    tokens = lemmatize_tokens(tokens, WordNetLemmatizer())
+    #tokens = lemmatize_tokens(tokens, WordNetLemmatizer())
     return tokens  
 
 
 def clean_text(text):
     text = parser.unescape(text)
-    text = text.encode('ascii', errors='ignore').decode('utf8')
+    #text = text.encode('ascii', errors='ignore').decode('utf8')
     text = regex.sub('\\n', ' ', text)  # @UndefinedVariable
     text = regex.sub('\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]', '', text)#, flags=regex.MULTILINE)  # @UndefinedVariable
     text = regex.sub(r'(?:(?:\d+,?)+(?:\.?\d+)?)','', text)  # @UndefinedVariable
     text = regex.sub("'"," '",text)  # @UndefinedVariable
-    words = text.split()
-    transformed_words = [APOSTROPHES[word] if word in APOSTROPHES else word for word in words]
-    text = " ".join(transformed_words)
+    #words = text.split()
+    #transformed_words = [APOSTROPHES[word] if word in APOSTROPHES else word for word in words]
+    #text = " ".join(transformed_words)
     text = " ".join(regex.findall('[A-Z][^A-Z]*', text.title()))  # @UndefinedVariable
     text = "".join(''.join(s)[:2] for _, s in itertools.groupby(text))
     text = "".join([ch for ch in text if ch not in punctuation])
@@ -114,7 +114,7 @@ def wordcloud_per_topic(model, feature_names, n_top_words, model_name):
   for topic_idx, topic in enumerate(model.components_):
     topic_dist_idx = topic.argsort()[:-n_top_words-1:-1]
     topic_dist = topic[topic_dist_idx]
-    norm_fac = 100/sum(topic_dist)
+    norm_fac = 10000/sum(topic_dist)
     words_topic = []
     names = [feature_names[i] for i in topic_dist_idx]
     for ele in range(len(topic_dist)):
@@ -128,7 +128,7 @@ def wordcloud_per_topic(model, feature_names, n_top_words, model_name):
 
 
 n_features = 2000
-n_topics = 5
+n_topics = 3
 n_top_words = 30
 
 labels = []
@@ -157,7 +157,8 @@ create_wordcloud(text, n_top_words, wordcloud_name, stopwords = STOPSET_SPANISH)
 
 # Use tf-idf features for NMF.
 print("Extracting tf-idf features for NMF...")
-tfidf_vectorizer = TfidfVectorizer(max_df=0.75, min_df=0.05, #max_df=0.95, min_df=0.01,
+tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=0.05, #max_df=0.95, min_df=0.01,
+                                   ngram_range=(1,3),
                                    max_features=n_features,
                                    tokenizer=tokenize, stop_words=STOPSET)
 t0 = time()
@@ -166,7 +167,8 @@ print("done in %0.3fs." % (time() - t0))
 
 # Use tf (raw term count) features for LDA.
 print("Extracting tf features for LDA...")
-tf_vectorizer = CountVectorizer(max_df=0.75, min_df=0.05, #max_df=0.95, min_df=0.01,
+tf_vectorizer = CountVectorizer(max_df=0.95, min_df=0.05, #max_df=0.95, min_df=0.01,
+                                ngram_range=(1,3),
                                 max_features=n_features,
                                 tokenizer=tokenize, stop_words=STOPSET)
 t0 = time()
