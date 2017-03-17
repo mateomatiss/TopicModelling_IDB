@@ -34,6 +34,10 @@ STOPSET = {"a", "as", "able", "about", "above", "according", "accordingly", "acr
 #'''
 #STOPSET = set(stopwords.words('english'))
 
+STOPSET_SPANISH = {'de', 'que', 'del', 'al', 'se', 'este', 'pa', 'un', 'una', 'unas', 'unos', 'uno', 'sobre', 'todo', 'tambien', 'tras', 'otro', 'algun', 'alguno', 'alguna', 'algunos', 'algunas', 'ser', 'es', 'soy', 'eres', 'somos', 'sois', 'estoy', 'esta', 'estamos', 'estais', 'estan', 'como', 'en', 'para', 'atras', 'porque', 'por que', 'estado', 'estaba', 'ante', 'antes', 'siendo', 'ambos', 'pero', 'por', 'poder', 'puede', 'puedo', 'podemos', 'podeis', 'pueden', 'fui', 'fue', 'fuimos', 'fueron', 'hacer', 'hago', 'hace', 'hacemos', 'haceis', 'hacen', 'cada', 'fin', 'incluso', 'desde', 'primero', 'conseguir', 'consigo', 'consigue', 'consigues', 'conseguimos', 'consiguen', 'ir', 'voy', 'va', 'vamos', 'vais', 'van', 'vaya', 'gueno', 'ha', 'tener', 'tengo', 'tiene', 'tenemos', 'teneis', 'tienen', 'el', 'la', 'lo', 'las', 'los', 'su', 'aqui', 'mio', 'tuyo', 'ellos', 'ellas', 'nos', 'nosotros', 'vosotros', 'vosotras', 'si', 'dentro', 'solo', 'solamente', 'saber', 'sabes', 'sabe', 'sabemos', 'sabeis', 'saben', 'ultimo', 'largo', 'bastante', 'haces', 'muchos',
+                   'aquellos', 'aquellas', 'sus', 'entonces', 'tiempo', 'verdad', 'verdadero', 'verdadera', 'cierto', 'ciertos', 'cierta', 'ciertas', 'intentar', 'intento', 'intenta', 'intentas', 'intentamos', 'intentais', 'intentan', 'dos', 'bajo', 'arriba', 'encima', 'usar', 'uso', 'usas', 'usa', 'usamos', 'usais', 'usan', 'emplear', 'empleo', 'empleas', 'emplean', 'ampleamos', 'empleais', 'valor', 'muy', 'era', 'eras', 'eramos', 'eran', 'modo', 'bien', 'cual', 'cuando', 'donde', 'mientras', 'quien', 'con', 'entre', 'sin', 'trabajo', 'trabajar', 'trabajas', 'trabaja', 'trabajamos', 'trabajais', 'trabajan', 'podria', 'podrias', 'podriamos', 'podrian', 'podriais', 'yo', 'aquel' }
+
+
 def stem_tokens(tokens, stemmer):
     stemmed = []
     for item in tokens:
@@ -50,7 +54,7 @@ def lemmatize_tokens(tokens, lemmatizer):
   
 def tokenize(text):
     tokens = nltk.word_tokenize(text)
-    tokens = [i for i in tokens if i not in STOPSET and len(i) > 1]
+    tokens = [i for i in tokens if i not in STOPSET_SPANISH and len(i) > 1]
     #tokens = stem_tokens(tokens, PorterStemmer())
     tokens = lemmatize_tokens(tokens, WordNetLemmatizer())
     return tokens  
@@ -76,7 +80,7 @@ def clean_text(text):
 def read_data(path, reviews, labels, words):
     for root, _, files in os.walk(path, topdown=True):  
         for name in files:
-            f = open(os.path.join(root, name), 'r')
+            f = open(os.path.join(root, name), 'r', encoding="utf8")
             content = f.read()
             clean_content = clean_text(content)
             [words.append(w) for w in clean_content.split()]     
@@ -84,8 +88,8 @@ def read_data(path, reviews, labels, words):
             labels.append(path==path_pos)            
    
 
-def create_wordcloud(text, max_nr_words, wordcloud_name):
-    wordcloud = WordCloud(stopwords = STOPSET,
+def create_wordcloud(text, max_nr_words, wordcloud_name, stopwords = STOPSET):
+    wordcloud = WordCloud(stopwords = stopwords,
                           max_words=max_nr_words,
                           width=3000,
                           height=2000
@@ -124,20 +128,32 @@ def wordcloud_per_topic(model, feature_names, n_top_words, model_name):
 
 
 n_features = 2000
-n_topics = 16
+n_topics = 5
 n_top_words = 30
 
 labels = []
 reviews = []
 words =[]
+path_docs = os.path.dirname(os.path.abspath(__file__)) + '\\Documents'
+
 
 print("\nLoading and cleaning the text in the reviews...")
 t0 = time()
-read_data(path_neg, reviews, labels, words)
-read_data(path_pos, reviews, labels, words)
+#read_data(path_neg, reviews, labels, words)
+#read_data(path_pos, reviews, labels, words)
+read_data(path_docs, reviews, labels, words)
 data_samples = reviews
 n_samples = len(data_samples)
 print("done in %0.3fs." % (time() - t0))
+
+'''#Test
+path_test = os.path.dirname(os.path.abspath(__file__)) + '\\Test'
+read_data(path_test, reviews, labels, words)
+text = " ".join(reviews)
+text = " ".join(tokenize(text))
+wordcloud_name = "./Wordcloud_Test.png"
+create_wordcloud(text, n_top_words, wordcloud_name, stopwords = STOPSET_SPANISH)
+#'''
 
 # Use tf-idf features for NMF.
 print("Extracting tf-idf features for NMF...")
@@ -183,12 +199,14 @@ lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=5,
                                 learning_offset=50.,
                                 random_state=0)
 t0 = time()
+#lda.fit(tf)
 lda.fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 print("\nTopics in LDA model:")
 tf_feature_names = tf_vectorizer.get_feature_names()
+#print_top_words(lda, tf_feature_names, n_top_words)
 print_top_words(lda, tfidf_feature_names, n_top_words)
 wordcloud_per_topic(lda, tfidf_feature_names, n_top_words, 'LDA')
-
+#'''
     
